@@ -1,0 +1,74 @@
+{
+  "cookies": [
+    {
+      "name": "_GRECAPTCHA",
+      "value": "09AKhCRwjScsNfBTx_E57Ai60GgzcGs3yQbdX4_OG-V9XcU9HMhuaF4szZgsHPIWeD66HdJ0J-YDYaW8fTGS7SrDg",
+      "domain": "www.google.com",
+      "path": "/recaptcha",
+      "expires": 1809887987.650368,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "NID",
+      "value": "CuQBCAESlgEBM9AglyCJbHR_6SdPyZI-mTs68-NOMZMi3uhY5jQaf-fyRiLb2U8QJq4GOPkPDFnKeyDWulz0OXAFvO-eGd7Zak2GuC-ITWliz1bs-H_zGaNeR9-Ert3ArYFDTY2ug51sfWImIjET5Ilaf3GB8KaJ9XaS7N2h_DzcR9GFBxP-l-WIM5sfhkf4Q6A1LqhfKeyNms3OA7soATJFAXBKQs9NJvRjZpd8NrAjkaHDU6Dkhb4oGPXKG_cazzgtuZM00TFmalfYONXm3Ndy3C-isnaplyXhKOeZFa0Jip6pGc0H",
+      "domain": ".google.com",
+      "path": "/",
+      "expires": 1810147173.115359,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmFjN2MyZjg3Yjg5OTQ1YjJlYjU3MzQiLCJmaXJzdE5hbWUiOiJBc2h3YXEiLCJsYXN0TmFtZSI6IiIsIm1vYmlsZSI6Ijk5ODY0Mzk1NTciLCJlbWFpbCI6IiIsInJvbGVzIjpbImN1c3RvbWVyIl0sImRldmljZUlkIjoiIiwidXNlcklkIjoiNjZhYzdjMmY4N2I4OTk0NWIyZWI1NzM0Iiwic291cmNlIjoicHdhIiwiaWF0IjoxNzk0MzM2MDMyLCJpc3MiOiJpTHhXQmhmWU9mY1I0QmFTYzJqRXhsRXBKWVJMU0pTbCJ9.M5K0oZZid1hWe2FTZzSHcVl0hFGeKR8stHttJLCcxRk",
+      "domain": "m.rapido.bike",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://m.rapido.bike",
+      "localStorage": [
+        {
+          "name": "token",
+          "value": "{\"data\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmFjN2MyZjg3Yjg5OTQ1YjJlYjU3MzQiLCJmaXJzdE5hbWUiOiJBc2h3YXEiLCJsYXN0TmFtZSI6IiIsIm1vYmlsZSI6Ijk5ODY0Mzk1NTciLCJlbWFpbCI6IiIsInJvbGVzIjpbImN1c3RvbWVyIl0sImRldmljZUlkIjoiIiwidXNlcklkIjoiNjZhYzdjMmY4N2I4OTk0NWIyZWI1NzM0Iiwic291cmNlIjoicHdhIiwiaWF0IjoxNzk0MzM2MDMyLCJpc3MiOiJpTHhXQmhmWU9mY1I0QmFTYzJqRXhsRXBKWVJMU0pTbCJ9.M5K0oZZid1hWe2FTZzSHcVl0hFGeKR8stHttJLCcxRk\",\"exp\":1794508832687}"
+        },
+        {
+          "name": "uniqueId",
+          "value": "39baa90c-a8bb-4069-92df-a1850b44be51"
+        },
+        {
+          "name": "_grecaptcha",
+          "value": "09AKhCRwh8z6cUwCF020963M-LP2Kfkrbx1w068C4S761iZA9xUkmGPjffM2NSJ3TUINI6KJA5tSdS5CGSumyL_mAnboyAGQlsN6yNO_QalYK20LR86pyBgCNt_IWJ-koY"
+        },
+        {
+          "name": "profile",
+          "value": "{\"location\":{\"lat\":12.3397588,\"lng\":76.6590076},\"trackingData\":{\"adId\":\"0bdc0b99-1158-4537-8ace-bd260e5ce1e6\",\"idfv\":null,\"modifiedOn\":\"1758726082210\"},\"preferredLanguage\":{\"languageCode\":null},\"roles\":[\"customer\"],\"active\":true,\"status\":2,\"createdOn\":1722580015083,\"mobileVerified\":true,\"emailVerified\":false,\"detailsUpdated\":true,\"passwordReset\":false,\"hailingUser\":false,\"whatsapp\":false,\"city\":\"Mysore\",\"cluster\":\"R S Naidu Nagara\",\"appVersion\":\"214\",\"promotionConsent\":false,\"_id\":\"66ac7c2f87b89945b2eb5734\",\"__v\":0,\"date\":\"2024-08-02\",\"device\":{\"deviceId\":\"\",\"manufacturer\":\"samsung\",\"model\":\"SM-S918U1\",\"firebaseAppInstanceId\":\"61e24ab7b0f5c358dc5585a5e4be4d0b\",\"integrityId\":\"GSVxiSSg2sR-OuhYAx2tffHjF8qaAFvmBqnTCMaiHW4\",\"trustLevel\":\"TRUSTED\",\"deviceFingerprintId\":\"eyJ2ZXJzaW9uIjoidjEiLCJkcm1JZCI6ImM0YjlkMTc1ODQ3YTFmM2VjNTZlMDU5MzExMzA0ZDNmMzZhMzhhZTQwZWMwMTZiZGRhNDNlNTg0NWFmZjRiNTMiLCJibG9ja1N0b3JlS2V5IjoiZGMzNzNkNmItNWJkNi0zNzU3LWExYWEtYTMxZWUxMWExZGI5In0\"},\"email\":\"\",\"firebaseToken\":\"cRXSO7g0QUiHgexG6Bg8AN:APA91bH3nq4gTadu6H9rVEYaLuGDy0DaCl_BJ88mRyvXvyZdcCJPExlqZU7sHapSK1yzN9zx5XdTgCehf6axvBg-yKNQtZe0LYqI4yEcVXBxoPYBm7lS88eB0Tcn13J7woBtvKtUpbAz\",\"firstName\":\"Ashwaq\",\"lastModifiedOn\":1794336019581,\"lastName\":\"\",\"mobile\":\"9986439557\",\"paymentMethod\":null,\"provider\":\"local\",\"statusUpdates\":{\"activatedBy\":null,\"deActivatedBy\":null},\"termsOfServiceConsent\":{\"accepted\":true,\"acceptedOn\":1722580021315},\"timeBucket\":\"11:59\",\"tokenDate\":\"2026-11-10\",\"dateOfBirth\":\"\",\"gender\":0,\"whatsappConsent\":{\"consent\":true,\"timestamp\":1722580032945},\"freshdeskId\":\"81105255159\",\"wallets\":[\"rapido\"]}"
+        },
+        {
+          "name": "traceId",
+          "value": "e16c512d-94ab-46a2-b146-82f2fc6f3f36"
+        }
+      ]
+    },
+    {
+      "origin": "https://www.google.com",
+      "localStorage": [
+        {
+          "name": "rc::a",
+          "value": "MWtxOWFtY2o1YnU2bA=="
+        },
+        {
+          "name": "rc::f",
+          "value": "0aANtYOfK0d87aXPYZpMoIiDilYwPAhbkrDP0k3sFp0zkROZgXsNvg3V9lXEGcK_5rhTx0pm0"
+        }
+      ]
+    }
+  ]
+}

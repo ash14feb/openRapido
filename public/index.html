@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rapido Booker</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --fg:#e8eaed; --muted:#8b93a1; --accent:#ffc400; --accent2:#ffd94d; --ok:#2ecc71; --err:#ff5c5c; --border:#2a2f3a; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--fg); min-height:100vh; display:flex; justify-content:center; padding:32px 16px; }
+  .wrap { width:100%; max-width:520px; }
+  h1 { font-size:22px; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
+  h1 .dot { width:10px; height:10px; border-radius:50%; background:var(--muted); }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:16px; }
+  label { display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+  input, select { width:100%; padding:12px 14px; background:#0c0e12; border:1px solid var(--border); border-radius:10px; color:var(--fg); font-size:15px; outline:none; }
+  input:focus, select:focus { border-color:var(--accent); }
+  .field { margin-bottom:14px; }
+  .row { display:flex; gap:12px; }
+  .row .field { flex:1; }
+  button { width:100%; padding:14px; border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:.15s; }
+  .btn-primary { background:var(--accent); color:#111; }
+  .btn-primary:hover { background:var(--accent2); }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-secondary { background:#232833; color:var(--fg); }
+  .btn-secondary:hover { background:#2d333f; }
+  .btn-ok { background:var(--ok); color:#052; }
+  .btn-danger { background:var(--err); color:#2a0000; }
+  .btn-danger:hover { filter:brightness(1.08); }
+  .btn-danger:disabled { opacity:.5; cursor:not-allowed; }
+  .toggle { display:flex; gap:8px; }
+  .toggle-btn { width:auto; flex:1; padding:9px 12px; background:#0c0e12; border:1px solid var(--border); border-radius:9px; color:var(--muted); font-size:14px; font-weight:600; cursor:pointer; }
+  .toggle-btn.active { background:var(--accent); color:#111; border-color:var(--accent); }
+  .coordPreview { margin-top:6px; font-size:12px; min-height:15px; }
+  .hidden { display:none !important; }
+  .status { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-bottom:14px; }
+  .status .pill { padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
+  .pill.idle { background:#2a2f3a; color:var(--muted); }
+  .pill.logged_in, .pill.browsing { background:#12331f; color:var(--ok); }
+  .pill.logging_in { background:#3a2f0a; color:var(--accent); }
+  .pill.staged { background:#0f2a3a; color:#4db8ff; }
+  .pill.booked { background:#12331f; color:var(--ok); }
+  .pill.error { background:#3a1414; color:var(--err); }
+  .options { display:flex; flex-direction:column; gap:8px; margin:14px 0; }
+  .opt { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border:1px solid var(--border); border-radius:10px; font-size:14px; }
+  .opt.sel { border-color:var(--accent); background:#1e1a0a; }
+  .opt .price { font-weight:700; }
+  .msg { padding:12px 14px; border-radius:10px; font-size:14px; margin-bottom:14px; }
+  .msg.err { background:#3a1414; color:#ffb3b3; border:1px solid #5a1e1e; }
+  .msg.info { background:#0f2a3a; color:#bfe3ff; border:1px solid #1e4a5a; }
+  .msg.ok { background:#12331f; color:#b6f5cf; border:1px solid #1e5a33; }
+  .price-big { font-size:32px; font-weight:800; margin:6px 0; }
+  .price-big span { font-size:16px; color:var(--muted); font-weight:500; }
+  .muted { color:var(--muted); font-size:13px; }
+  a.link { color:var(--accent); text-decoration:none; }
+
+  .ride-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .ride-spinner { width:18px; height:18px; border-radius:50%; border:3px solid #2a2f3a; border-top-color:var(--accent); animation:spin 1s linear infinite; flex:none; }
+  .ride-head.done .ride-spinner { animation:none; border-color:var(--ok); border-top-color:var(--ok); }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .ride-stage { font-size:17px; font-weight:700; }
+  .ride-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+  .captain { display:flex; gap:14px; align-items:center; padding:14px; background:#0c0e12; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; }
+  .captain img, .captain .avatar { width:52px; height:52px; border-radius:50%; object-fit:cover; background:#232833; flex:none; }
+  .captain .name { font-weight:700; font-size:15px; display:flex; align-items:center; gap:8px; }
+  .captain .rating { font-size:11px; font-weight:700; color:#111; background:var(--accent); border-radius:999px; padding:1px 7px; }
+  .captain .vehicle { font-size:13px; color:var(--fg); margin-top:3px; letter-spacing:.04em; }
+  .captain .model { font-size:12px; color:var(--muted); margin-top:1px; }
+  .otp { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border:1px dashed #5a4a10; border-radius:12px; background:#1e1a0a; margin-bottom:12px; }
+  .otp .lbl { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  .otp .digits { display:flex; gap:6px; }
+  .otp .digits span { width:30px; height:34px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; background:#0c0e12; border:1px solid var(--border); border-radius:8px; }
+  .ride-meta { display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--muted); margin-bottom:12px; }
+  .ride-meta b { color:var(--fg); }
+  .steps { display:flex; gap:6px; margin-bottom:14px; }
+  .steps .s { flex:1; height:4px; border-radius:2px; background:#2a2f3a; }
+  .steps .s.on { background:var(--accent); }
+  .steps .s.cur { background:var(--accent2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span class="dot" id="dot"></span> Rapido Booker</h1>
+  <div class="sub">Book a Rapido from your own account. Runs on your machine.</div>
+
+  <div class="status">
+    <span>Status:</span>
+    <span class="pill idle" id="statusPill">idle</span>
+    <span id="statusExtra" class="muted"></span>
+  </div>
+
+  <div id="loginBox" class="card hidden">
+    <div class="msg info">Login needed. A Rapido window will open — enter your phone number and OTP there.</div>
+    <button class="btn-primary" id="loginBtn">Open Rapido window &amp; log in</button>
+    <p class="muted" style="margin:12px 0 0">After completing OTP, this page will detect it automatically.</p>
+  </div>
+
+  <div id="formBox" class="card">
+    <div class="field">
+      <label>Input mode</label>
+      <div class="toggle" role="tablist">
+        <button type="button" class="toggle-btn active" data-mode="address" id="modeAddress">Address</button>
+        <button type="button" class="toggle-btn" data-mode="coords" id="modeCoords">Coordinates</button>
+      </div>
+    </div>
+
+    <div id="addrFields">
+      <div class="field">
+        <label for="pickup">Pickup</label>
+        <input id="pickup" placeholder="e.g. 31, Rajendra Nagar, Mysuru" value="31, Rajendra Nagar, Mysuru" />
+      </div>
+      <div class="field">
+        <label for="drop">Drop</label>
+        <input id="drop" placeholder="e.g. Kamakshi Hospital, Mysuru" value="Kamakshi Hospital, Kuvempunagara, Mysuru" />
+      </div>
+    </div>
+
+    <div id="coordFields" class="hidden">
+      <div class="field">
+        <label>Pickup coordinates</label>
+        <div class="row">
+          <input id="pickupLat" placeholder="Latitude e.g. 12.2958" />
+          <input id="pickupLng" placeholder="Longitude e.g. 76.6394" />
+        </div>
+        <div class="muted coordPreview" id="pickupPreview"></div>
+      </div>
+      <div class="field">
+        <label>Drop coordinates</label>
+        <div class="row">
+          <input id="dropLat" placeholder="Latitude e.g. 12.3300" />
+          <input id="dropLng" placeholder="Longitude e.g. 76.6600" />
+        </div>
+        <div class="muted coordPreview" id="dropPreview"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rideType">Ride type</label>
+      <select id="rideType">
+        <option>Bike Direct</option>
+        <option>Auto</option>
+        <option>Cab Economy</option>
+        <option>Cab XL</option>
+        <option>Cab Premium</option>
+        <option>Parcel on Bike</option>
+      </select>
+    </div>
+    <button class="btn-primary" id="stageBtn">Get price</button>
+  </div>
+
+  <div id="msgBox"></div>
+
+  <div id="stageBox" class="card hidden">
+    <div class="muted" id="routeText"></div>
+    <div class="price-big" id="priceText"></div>
+    <div class="options" id="optionsList"></div>
+    <button class="btn-ok" id="confirmBtn">Confirm &amp; Book</button>
+    <button class="btn-secondary" id="resetBtn" style="margin-top:10px">Back</button>
+    <p class="muted" style="margin:12px 0 0">Booking uses your real Rapido account and may charge you.</p>
+  </div>
+
+  <div id="bookedBox" class="card hidden">
+    <div class="ride-head" id="rideHead">
+      <div class="ride-spinner"></div>
+      <div>
+        <div class="ride-stage" id="rideStage">Looking for a captain…</div>
+        <div class="ride-sub" id="rideSub">This can take a minute. Updates appear here automatically.</div>
+      </div>
+    </div>
+    <div class="steps" id="rideSteps">
+      <div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+    </div>
+    <div class="captain hidden" id="captainBox">
+      <img id="capPhoto" alt="Captain" class="hidden" />
+      <div class="avatar hidden" id="capAvatar"></div>
+      <div>
+        <div class="name"><span id="capName">Captain</span><span class="rating hidden" id="capRating"></span></div>
+        <div class="vehicle" id="capBike"></div>
+        <div class="model" id="capModel"></div>
+      </div>
+    </div>
+    <div class="otp hidden" id="otpBox">
+      <span class="lbl">Start ride PIN</span>
+      <span class="digits" id="otpDigits"></span>
+    </div>
+    <div class="ride-meta" id="rideMeta">
+      <span id="metaEta"></span>
+      <span id="metaFare"></span>
+    </div>
+    <button class="btn-danger" id="cancelBtn">Cancel this ride</button>
+    <a class="link hidden" id="trackLink" style="display:block;text-align:center;margin-top:10px" target="_blank" rel="noopener">Share live tracking link</a>
+    <button class="btn-secondary" id="newRideBtn" style="margin-top:10px">Book another</button>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let staged = null;
+let inputMode = 'address';
+
+function setMode(mode) {
+  inputMode = mode;
+  $('modeAddress').classList.toggle('active', mode === 'address');
+  $('modeCoords').classList.toggle('active', mode === 'coords');
+  $('addrFields').classList.toggle('hidden', mode !== 'address');
+  $('coordFields').classList.toggle('hidden', mode !== 'coords');
+}
+$('modeAddress').onclick = () => setMode('address');
+$('modeCoords').onclick = () => setMode('coords');
+
+// Live reverse-geocode preview for coordinates
+async function previewCoords(which) {
+  const lat = $(which + 'Lat').value.trim();
+  const lng = $(which + 'Lng').value.trim();
+  const out = $(which + 'Preview');
+  if (!lat || !lng || !Number.isFinite(+lat) || !Number.isFinite(+lng)) { out.textContent = ''; return; }
+  out.textContent = 'Looking up…';
+  const r = await api('/api/geocode', { lat: +lat, lng: +lng });
+  out.textContent = r.ok ? '≈ ' + r.data.display : (r.data.error || 'lookup failed');
+}
+['pickupLat', 'pickupLng'].forEach((id) => { $(id).oninput = () => previewCoords('pickup'); });
+['dropLat', 'dropLng'].forEach((id) => { $(id).oninput = () => previewCoords('drop'); });
+
+function setStatus(s, extra = '') {
+  $('statusPill').textContent = s;
+  $('statusPill').className = 'pill ' + s;
+  $('statusExtra').textContent = extra;
+  $('dot').style.background = (s === 'logged_in' || s === 'booked' || s === 'staged' || s === 'browsing') ? '#2ecc71'
+    : s === 'logging_in' ? '#ffc400' : s === 'error' ? '#ff5c5c' : '#8b93a1';
+}
+
+function msg(kind, text) {
+  if (!text) { $('msgBox').innerHTML = ''; return; }
+  $('msgBox').innerHTML = `<div class="msg ${kind}">${text}</div>`;
+}
+
+async function api(path, body) {
+  const res = await fetch(path, {
+    method: body ? 'POST' : 'GET',
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
+const STAGE_ORDER = ['searching', 'on_the_way', 'arrived', 'started', 'dropped'];
+const STAGE_TITLES = {
+  searching: 'Looking for a captain…',
+  on_the_way: 'Captain is on the way',
+  arrived: 'Captain has arrived',
+  started: 'Ride started',
+  dropped: 'Ride completed',
+};
+let lastStage = null;
+let fastTimer = null;
+
+function stageTitle(ride) {
+  if (ride.stage === 'on_the_way' && ride.etaMins) return `Captain is ${ride.etaMins} min away`;
+  if (ride.stage === 'on_the_way' && /arriving/i.test(ride.statusText || '')) return 'Captain is arriving';
+  return STAGE_TITLES[ride.stage] || ride.stageLabel || 'Ride in progress';
+}
+
+function stageSub(ride, prevStage) {
+  switch (ride.stage) {
+    case 'searching':
+      return 'This can take a minute. Updates appear here automatically.';
+    case 'on_the_way':
+      return 'Share the PIN below with your captain to start the ride.';
+    case 'arrived':
+      return 'Your captain is waiting at the pickup point.';
+    case 'started':
+      return 'Enjoy your ride.';
+    case 'dropped':
+      return 'Thanks for riding with Rapido.';
+    default:
+      return prevStage ? '' : 'Updates appear here automatically.';
+  }
+}
+
+function renderRide(ride) {
+  const prev = lastStage;
+  lastStage = ride ? ride.stage : null;
+  const head = $('rideHead');
+  head.classList.toggle('done', !!ride && ride.stage === 'dropped');
+  $('rideStage').textContent = ride ? stageTitle(ride) : 'No active ride';
+  $('rideSub').textContent = ride ? stageSub(ride, prev) : '';
+
+  const idx = ride ? STAGE_ORDER.indexOf(ride.stage) : -1;
+  [...$('rideSteps').children].forEach((el, i) => {
+    el.className = 's' + (i < idx ? ' on' : i === idx ? ' cur' : '');
+  });
+
+  const cap = ride && ride.rider;
+  const showCap = !!(cap && (cap.name || cap.bikeNumber));
+  $('captainBox').classList.toggle('hidden', !showCap);
+  if (showCap) {
+    const photo = cap.photo && /^https?:\/\//.test(cap.photo) ? cap.photo : null;
+    $('capPhoto').classList.toggle('hidden', !photo);
+    $('capAvatar').classList.toggle('hidden', !!photo);
+    if (photo) $('capPhoto').src = photo;
+    if (!photo) $('capAvatar').textContent = (cap.name || 'R').trim().charAt(0).toUpperCase();
+    $('capName').textContent = cap.name || 'Your captain';
+    $('capRating').classList.toggle('hidden', cap.rating == null);
+    if (cap.rating != null) $('capRating').textContent = '★ ' + cap.rating;
+    $('capBike').textContent = cap.bikeNumber || '';
+    $('capModel').textContent = [cap.bikeModel, cap.phone].filter(Boolean).join(' · ');
+  }
+
+  const showOtp = !!(ride && ride.otp && (ride.stage === 'on_the_way' || ride.stage === 'arrived'));
+  $('otpBox').classList.toggle('hidden', !showOtp);
+  $('otpDigits').innerHTML = showOtp
+    ? String(ride.otp).split('').map((d) => `<span>${esc(d)}</span>`).join('')
+    : '';
+
+  const eta = ride && ride.etaMins != null ? `<span>ETA <b>${ride.etaMins} min</b></span>` : '<span></span>';
+  const fare = ride && ride.amount != null ? `<span>Fare <b>₹${ride.amount}</b></span>` : '<span></span>';
+  $('rideMeta').innerHTML = eta + fare;
+  $('rideMeta').classList.toggle('hidden', !(ride && (ride.etaMins != null || ride.amount != null)));
+
+  const track = $('trackLink');
+  track.classList.toggle('hidden', !(ride && ride.trackURL));
+  if (ride && ride.trackURL) track.href = ride.trackURL;
+
+  $('cancelBtn').hidden = !!(ride && (ride.stage === 'started' || ride.stage === 'dropped'));
+}
+
+function applyState(data) {
+  setStatus(data.status || 'idle', data.ride ? '· ' + (STAGE_TITLES[data.ride.stage] || 'ride active') : '');
+  const needLogin = data.status === 'logging_in' || (data.loggedIn === false && !data.activeRide);
+  if (needLogin && !staged) {
+    $('loginBox').classList.remove('hidden');
+    $('formBox').classList.add('hidden');
+  } else {
+    $('loginBox').classList.add('hidden');
+    if (!data.activeRide) $('formBox').classList.remove('hidden');
+  }
+
+  const ride = data.ride;
+  const showRide = !!(ride && (ride.active || ride.stage === 'dropped')) && (data.bookedByApp || ride.active);
+  if (showRide) {
+    $('bookedBox').classList.remove('hidden');
+    $('formBox').classList.add('hidden');
+    $('stageBox').classList.add('hidden');
+    renderRide(ride);
+    $('cancelBtn').disabled = !ride.active || ride.stage === 'started' || !data.canCancel;
+    $('cancelBtn').textContent = ride.stage === 'arrived' ? 'Cancel (fee may apply)' : 'Cancel this ride';
+    // Poll fast while the captain is being searched / is approaching.
+    if (ride.active && !fastTimer) {
+      fastTimer = setInterval(refresh, 2500);
+    } else if (!ride.active && fastTimer) {
+      clearInterval(fastTimer);
+      fastTimer = null;
+    }
+  } else {
+    $('bookedBox').classList.add('hidden');
+    if (fastTimer) { clearInterval(fastTimer); fastTimer = null; }
+    if (staged) {
+      $('stageBox').classList.remove('hidden');
+      $('formBox').classList.add('hidden');
+    } else {
+      $('stageBox').classList.add('hidden');
+      $('formBox').classList.remove('hidden');
+    }
+  }
+}
+
+async function refresh() {
+  try {
+    const { data } = await api('/api/status');
+    applyState(data);
+  } catch { /* server not up yet */ }
+}
+
+$('loginBtn').onclick = async () => {
+  $('loginBtn').disabled = true;
+  msg('info', 'Opening Rapido window… complete the OTP there.');
+  const r = await api('/api/login/start', {});
+  if (r.data.loggedIn) { await afterLogin(); }
+  else {
+    msg('info', 'Rapido window open. Enter OTP there — waiting…');
+    const w = await api('/api/login/wait', {});
+    if (w.data.loggedIn) await afterLogin();
+    else msg('err', w.data.error || 'Login timed out.');
+  }
+  $('loginBtn').disabled = false;
+};
+
+async function afterLogin() {
+  msg('ok', 'Logged in. You can book now.');
+  $('loginBox').classList.add('hidden');
+  setStatus('logged_in');
+}
+
+$('stageBtn').onclick = async () => {
+  let pickup, drop;
+  if (inputMode === 'coords') {
+    const pLat = $('pickupLat').value.trim(), pLng = $('pickupLng').value.trim();
+    const dLat = $('dropLat').value.trim(), dLng = $('dropLng').value.trim();
+    if (!pLat || !pLng || !dLat || !dLng) { msg('err', 'Enter both lat/lng for pickup and drop.'); return; }
+    if (![pLat, pLng, dLat, dLng].every((v) => Number.isFinite(+v))) { msg('err', 'Coordinates must be numbers.'); return; }
+    pickup = { lat: +pLat, lng: +pLng };
+    drop = { lat: +dLat, lng: +dLng };
+  } else {
+    pickup = $('pickup').value.trim();
+    drop = $('drop').value.trim();
+    if (!pickup || !drop) { msg('err', 'Enter both pickup and drop.'); return; }
+  }
+  const rideType = $('rideType').value;
+  $('stageBtn').disabled = true;
+  msg('info', 'Driving Rapido: setting locations, fetching price… (this takes ~15s)');
+  const r = await api('/api/stage', { pickup, drop, rideType });
+  $('stageBtn').disabled = false;
+
+  if (r.status === 401 || r.data.loginRequired) {
+    msg('info', 'You need to log in first.');
+    $('loginBox').classList.remove('hidden');
+    setStatus('logging_in');
+    return;
+  }
+  if (!r.ok) { msg('err', 'Error: ' + (r.data.error || 'unknown')); setStatus('error'); return; }
+
+  staged = r.data;
+  msg('ok', `Staged ${staged.rideType} — ₹${staged.price ?? '?'}. Review, then confirm.`);
+  $('routeText').textContent = `${staged.pickupLabel}  →  ${staged.dropLabel}`;
+  $('priceText').innerHTML = staged.price != null ? `₹${staged.price} <span>${staged.rideType}</span>` : staged.rideType;
+  $('optionsList').innerHTML = (staged.options || []).map((o) =>
+    `<div class="opt ${o.name === staged.rideType ? 'sel' : ''}"><span>${esc(o.name)}</span><span class="price">₹${o.price}</span></div>`
+  ).join('');
+  $('stageBox').classList.remove('hidden');
+  $('formBox').classList.add('hidden');
+  setStatus('staged');
+};
+
+$('confirmBtn').onclick = async () => {
+  if (!staged) return;
+  if (!confirm(`Book ${staged.rideType} for ₹${staged.price}? This charges your real account.`)) return;
+  $('confirmBtn').disabled = true;
+  msg('info', 'Booking…');
+  const r = await api('/api/confirm', {});
+  $('confirmBtn').disabled = false;
+  if (!r.ok) { msg('err', 'Booking failed: ' + (r.data.error || 'unknown')); setStatus('error'); return; }
+  msg('ok', r.data.searching ? 'Booked! Searching for a captain…' : 'Booked. Captain details are below.');
+  setStatus('booked');
+  $('stageBox').classList.add('hidden');
+  staged = null;
+  lastStage = null;
+  applyState({ status: 'booked', bookedByApp: true, canCancel: true, activeRide: true, ride: r.data.ride || { active: true, stage: 'searching' } });
+  refresh();
+};
+
+$('cancelBtn').onclick = async () => {
+  if (!confirm('Cancel this ride? This uses your Rapido account\'s cancel action.')) return;
+  $('cancelBtn').disabled = true;
+  msg('info', 'Cancelling…');
+  const r = await api('/api/cancel', {});
+  if (!r.ok) { msg('err', 'Cancel failed: ' + (r.data.error || 'unknown')); $('cancelBtn').disabled = false; setStatus('error'); return; }
+  msg(r.data.canceled ? 'ok' : 'info', r.data.canceled ? 'Ride cancelled.' : 'Ride could not be cancelled — it may have already started.');
+  if (r.data.canceled) {
+    $('bookedBox').classList.add('hidden');
+    $('formBox').classList.remove('hidden');
+    lastStage = null;
+  } else {
+    $('cancelBtn').disabled = false;
+  }
+  setStatus(r.data.canceled ? 'logged_in' : 'booked');
+  refresh();
+};
+
+$('newRideBtn').onclick = () => {
+  msg('', '');
+  $('formBox').classList.remove('hidden');
+  refresh();
+};
+
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+$('resetBtn').onclick = () => {
+  staged = null;
+  $('stageBox').classList.add('hidden');
+  $('formBox').classList.remove('hidden');
+  msg('', '');
+  refresh();
+};
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>
