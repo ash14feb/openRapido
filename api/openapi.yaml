@@ -1,0 +1,440 @@
+openapi: 3.0.3
+info:
+  title: Rapido Booking API
+  version: 1.0.0
+  description: |
+    HTTP API that drives a persistent Rapido mobile-web session through Playwright.
+
+    The server keeps one shared Chromium session, so booking calls are serialized:
+    overlapping operations fail with `500 Another operation is in progress`.
+    All endpoints are CORS-enabled (`Access-Control-Allow-Origin: *`).
+
+    Typical booking flow:
+    1. `POST /api/login/start` then `POST /api/login/wait` (complete OTP in the opened window)
+    2. `POST /api/stage` to pick locations + ride type and get a quoted price
+    3. `POST /api/confirm` to place the booking
+    4. Poll `GET /api/status` for captain/OTP/ETA updates
+    5. `POST /api/cancel` while the ride is still cancelable
+servers:
+  - url: http://localhost:4317
+    description: Local server (override with the PORT env var)
+tags:
+  - name: System
+  - name: Auth
+  - name: Booking
+  - name: Location
+  - name: Debug
+paths:
+  /api/status:
+    get:
+      tags: [System]
+      summary: Current session and live ride snapshot
+      description: |
+        Reads the ride state from the app's own status payload and the rendered page.
+        Does not launch the browser; if no browser is open yet it returns `status: idle`
+        and `loggedIn: null`.
+      responses:
+        '200':
+          description: Current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateResponse'
+  /api/login/start:
+    post:
+      tags: [Auth]
+      summary: Open Rapido home and detect login state
+      description: |
+        Launches the persistent browser if needed and navigates to the Rapido home page.
+        If an OTP screen is shown, returns `loggedIn: false`. If a live ride already
+        exists, it is returned instead of being cleared.
+      responses:
+        '200':
+          description: Login check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginStartResponse'
+  /api/login/wait:
+    post:
+      tags: [Auth]
+      summary: Wait for the user to finish OTP login
+      description: Brings the Rapido window to the front and waits up to 4 minutes for login to complete.
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginWaitResponse'
+        '408':
+          description: Login timed out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/geocode:
+    post:
+      tags: [Location]
+      summary: Reverse-geocode coordinates to an address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LatLng'
+      responses:
+        '200':
+          description: Resolved address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeocodeResponse'
+        '400':
+          description: lat/lng missing or not numeric
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: No address found for those coordinates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/stage:
+    post:
+      tags: [Booking]
+      summary: Stage a ride and get a price quote
+      description: |
+        Starts from a clean home screen, sets pickup and drop (text address or
+        coordinates), selects a ride type, and returns the quoted price and all
+        available options. This does **not** book the ride.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageRequest'
+      responses:
+        '200':
+          description: Staged ride and quote
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StageResponse'
+        '401':
+          description: Login required before staging
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Staging failed (location not found, ride type unavailable, busy)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/confirm:
+    post:
+      tags: [Booking]
+      summary: Book the currently staged ride
+      description: Clicks Book on the staged screen. Marks the ride as booked by this API so cancel only targets it.
+      responses:
+        '200':
+          description: Booking placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmResponse'
+        '500':
+          description: No staged ride, another operation in progress, or booking failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/cancel:
+    post:
+      tags: [Booking]
+      summary: Cancel a ride booked by this API
+      description: |
+        Only cancels rides this API booked, and only while the ride can still be
+        cancelled (not after `started` or `dropped`).
+      responses:
+        '200':
+          description: Cancellation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        '500':
+          description: No app-booked ride, ride already started, or cancel failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/screenshot:
+    get:
+      tags: [Debug]
+      summary: Last staged-ride screenshot
+      responses:
+        '200':
+          description: PNG screenshot of the staged ride screen
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: No screenshot captured yet
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/debug/screen:
+    get:
+      tags: [Debug]
+      summary: Inspect the current browser screen
+      description: Captures `live_screen.png` and returns page text, buttons, and modal details for troubleshooting selectors.
+      responses:
+        '200':
+          description: Screen diagnostics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugScreenResponse'
+        '500':
+          description: Diagnostic read failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        loginRequired:
+          type: boolean
+    LatLng:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          example: 12.9716
+        lng:
+          type: number
+          example: 77.5946
+    Rider:
+      type: object
+      nullable: true
+      properties:
+        name:
+          type: string
+          nullable: true
+        bikeNumber:
+          type: string
+          nullable: true
+        bikeModel:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          nullable: true
+        photo:
+          type: string
+          nullable: true
+    RideSnapshot:
+      type: object
+      nullable: true
+      required: [active, stage, stageLabel, cancelable, updatedAt]
+      properties:
+        active:
+          type: boolean
+          description: True until the ride is dropped (completed)
+        stage:
+          type: string
+          enum: [searching, on_the_way, arrived, started, dropped]
+        stageLabel:
+          type: string
+          example: Captain is on the way
+        statusText:
+          type: string
+          nullable: true
+        rider:
+          $ref: '#/components/schemas/Rider'
+        otp:
+          type: string
+          nullable: true
+        etaMins:
+          type: integer
+          nullable: true
+        trackURL:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        cancelable:
+          type: boolean
+        updatedAt:
+          type: integer
+          description: Epoch milliseconds when the snapshot was read
+    StateResponse:
+      type: object
+      required: [status, activeRide, bookedByApp, canCancel]
+      properties:
+        status:
+          type: string
+          enum: [idle, logging_in, logged_in, browsing, staged, booked, error]
+        loggedIn:
+          type: boolean
+          nullable: true
+          description: null when the browser has not been launched yet
+        url:
+          type: string
+        activeRide:
+          type: boolean
+        ride:
+          $ref: '#/components/schemas/RideSnapshot'
+        bookedByApp:
+          type: boolean
+        canCancel:
+          type: boolean
+        error:
+          type: string
+          description: Present only when reading state failed mid-navigation
+    LoginStartResponse:
+      type: object
+      required: [loggedIn]
+      properties:
+        loggedIn:
+          type: boolean
+        url:
+          type: string
+        activeRide:
+          type: boolean
+        ride:
+          $ref: '#/components/schemas/RideSnapshot'
+    LoginWaitResponse:
+      type: object
+      required: [loggedIn]
+      properties:
+        loggedIn:
+          type: boolean
+          example: true
+    GeocodeResponse:
+      type: object
+      required: [display, full, lat, lng]
+      properties:
+        display:
+          type: string
+          example: MG Road, Bengaluru
+        full:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+    StageRequest:
+      type: object
+      required: [pickup, drop]
+      properties:
+        pickup:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/LatLng'
+        drop:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/LatLng'
+        rideType:
+          type: string
+          default: Bike Direct
+          description: |
+            One of Bike Direct, Auto, Cab Economy, Cab XL, Cab Premium, Parcel on Bike
+            (aliases like `bike`, `auto`, `parcel` are accepted).
+    RideOption:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Bike Direct
+        price:
+          type: number
+          example: 49
+    StageResponse:
+      type: object
+      properties:
+        pickup:
+          type: string
+        drop:
+          type: string
+        pickupLabel:
+          type: string
+        dropLabel:
+          type: string
+        rideType:
+          type: string
+        price:
+          type: number
+          nullable: true
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/RideOption'
+    ConfirmResponse:
+      type: object
+      required: [booked]
+      properties:
+        booked:
+          type: boolean
+        searching:
+          type: boolean
+          description: True when no captain has accepted yet
+        ride:
+          $ref: '#/components/schemas/RideSnapshot'
+        rideType:
+          type: string
+        price:
+          type: number
+          nullable: true
+    CancelResponse:
+      type: object
+      required: [canceled]
+      properties:
+        canceled:
+          type: boolean
+    DebugScreenResponse:
+      type: object
+      properties:
+        url:
+          type: string
+        text:
+          type: string
+        modals:
+          type: integer
+        buttons:
+          type: array
+          items:
+            type: string
+        modalHtml:
+          type: string
+        clickables:
+          type: array
+          items:
+            type: object
+            properties:
+              tag:
+                type: string
+              cls:
+                type: string
+              text:
+                type: string
