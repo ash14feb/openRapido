@@ -1,4 +1,4 @@
-# openRapido
+# OpenRapido
 
 Open-source Rapido ride booking automation and API integration platform.
 
@@ -8,7 +8,7 @@ It allows developers to integrate Rapido ride-booking capabilities into their ow
 
 Whether you're building a personal ride-booking application, a business management system, a customer-facing booking portal, or experimenting with automation, openRapido provides the foundation to connect your application with Rapido's ride-booking workflow.
 
-# Rapido Booker
+# OpenRapido
 
 Books and tracks Rapido rides from your own account by driving the real
 Rapido web app (`m.rapido.bike`) in a visible, persistent Chromium window via
