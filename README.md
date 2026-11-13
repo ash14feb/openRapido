@@ -1,4 +1,4 @@
-# openRapido
+# OpenRapido
 
 **Open-source Rapido ride booking automation and API integration platform.**
 
